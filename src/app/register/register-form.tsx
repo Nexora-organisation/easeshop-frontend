@@ -1,0 +1,133 @@
+"use client"
+
+import {useForm} from "react-hook-form"
+import {zodResolver} from "@hookform/resolvers/zod"
+import {useState} from "react"
+import {useRouter} from "next/navigation"
+import Link from "next/link"
+
+import {cn} from "@/lib/utils"
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card"
+import {Input} from "@/components/ui/input"
+import {Button} from "@/components/ui/button"
+import {Form, FormField, FormItem, FormLabel, FormControl, FormMessage} from "@/components/ui/form"
+
+import {registerSchema, type RegisterForm} from "@/lib/validationSchemas"
+import {registerUser} from "@/lib/api" // à créer si pas encore fait
+
+export function RegisterForm() {
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const router = useRouter()
+
+    const form = useForm<RegisterForm>({
+        resolver: zodResolver(registerSchema),
+    })
+
+    const onSubmit = async (data: RegisterForm) => {
+        setIsLoading(true)
+        setError(null)
+
+        try {
+            const result = await registerUser(data)
+            if (result.token) {
+                localStorage.setItem("authToken", result.token)
+                router.push("/") // Redirige vers l'accueil après inscription
+            }
+        } catch (err) {
+            if (err && typeof err === "object") {
+                Object.entries(err).forEach(([field, message]) => {
+                    if (field === "global") {
+                        setError(message as string)
+                    } else {
+                        form.setError(field as keyof RegisterForm, {
+                            type: "server",
+                            message: message as string,
+                        })
+                    }
+                })
+            } else {
+                setError("Une erreur inattendue est survenue")
+            }
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    return (
+        <div className={cn("flex flex-col gap-6")}>
+        {error && (
+            <div className="mb-4 w-full rounded-lg border border-red-300 bg-red-100 p-3 text-sm text-red-700">
+                {error}
+            </div>
+        )}
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Créer un compte</CardTitle>
+                    <CardDescription>Remplis le formulaire pour t&apos;inscrire</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)}>
+                            <div className="flex flex-col gap-6">
+                                <FormField
+                                    control={form.control}
+                                    name="username"
+                                    render={({field}) => (
+                                        <FormItem>
+                                            <FormLabel>Nom d&apos;utilisateur</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="ex: johndoe" {...field} />
+                                            </FormControl>
+                                            <FormMessage/>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="email"
+                                    render={({field}) => (
+                                        <FormItem>
+                                            <FormLabel>Email</FormLabel>
+                                            <FormControl>
+                                                <Input type="email" placeholder="ex: email@example.com" {...field} />
+                                            </FormControl>
+                                            <FormMessage/>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="password"
+                                    render={({field}) => (
+                                        <FormItem>
+                                            <FormLabel>Mot de passe</FormLabel>
+                                            <FormControl>
+                                                <Input type="password" placeholder="●●●●●●●●" {...field} />
+                                            </FormControl>
+                                            <FormMessage/>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <Button type="submit" className="w-full">
+                                    {isLoading ? "Inscription..." : "Créer mon compte"}
+                                </Button>
+                            </div>
+
+                            <div className="mt-4 text-center text-sm">
+                                Tu as déjà un compte ?{" "}
+                                <Link href="/login" className="underline underline-offset-4">
+                                    Se connecter
+                                </Link>
+                            </div>
+                        </form>
+                    </Form>
+                </CardContent>
+            </Card>
+        </div>
+    )
+}
