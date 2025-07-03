@@ -66,6 +66,7 @@ export function RegisterForm() {
                 {error}
             </div>
         )}
+
             <Card>
                 <CardHeader>
                     <CardTitle>Créer un compte</CardTitle>

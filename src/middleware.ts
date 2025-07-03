@@ -1,4 +1,4 @@
-import { auth } from "./auth";
+import { auth } from "../auth"
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -6,7 +6,7 @@ export async function middleware(req: NextRequest) {
     const session = await auth();
 
     // Liste des chemins protégés
-    const protectedPaths = ["/dashboard", "/api/protected"];
+    const protectedPaths = ["/dashboard", "/api/protected", "/cart"];
 
     const pathname = req.nextUrl.pathname;
 
@@ -24,5 +24,5 @@ export async function middleware(req: NextRequest) {
 
 // Spécifie quelles routes le middleware doit intercepter
 export const config = {
-    matcher: ["/dashboard/:path*", "/api/protected/:path*"],
+    matcher: ["/dashboard/:path*", "/api/protected/:path*","/cart/:path*"],
 };
